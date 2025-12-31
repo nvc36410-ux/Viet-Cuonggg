@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        .text-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 720px;
+            text-align: center;
+            line-height: 1.8;
+            font-size: 18px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .signature {
+            margin-top: 14px;
+            font-size: 15px;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="text-box">
+    <p>
+        2026. Mong cậu luôn giữ được một trái tim nóng và nhiệt huyết.<br>
+        Nếu cuộc sống có những chuyện chẳng như ý cậu mong cầu và cậu thấy mình thật nhỏ bé,<br>
+        hãy nhớ sự tồn tại của cậu có ý nghĩa rất lớn.<br><br>
+        Cuộc đời chỉ là một hành trình dài với đầy trải nghiệm,<br>
+        mong cậu luôn hạnh phúc, bình an, may mắn trên hành trình này.<br><br>
+        Cảm ơn cậu vì đã luôn cố gắng 💙
+    </p>
+    <p class="signature">— Việt Cường</p>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    canvas.style.width = innerWidth + "px";
+    canvas.style.height = innerHeight + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 4 + 1;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.02 + 0.015;
+        this.gravity = 0.04;
+    }
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + this.gravity;
+        this.speed *= 0.98;
+        this.alpha -= this.decay;
+    }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+class Firework {
+constructor(x = Math.random() * innerWidth, y = Math.random() * innerHeight * 0.4) {
+        this.x = x;
+        this.y = innerHeight;
+        this.targetY = y;
+        this.speed = Math.random() * 3 + 4;
+        this.color = `hsl(${Math.random() * 360},100%,60%)`;
+        this.exploded = false;
+        this.particles = [];
+    }
+    update() {
+        if (!this.exploded) {
+            this.y -= this.speed;
+            if (this.y <= this.targetY) {
+                this.exploded = true;
+                for (let i = 0; i < 80; i++) {
+                    this.particles.push(new Particle(this.x, this.y, this.color));
+                }
+            }
+        } else {
+            this.particles.forEach(p => p.update());
+            this.particles = this.particles.filter(p => p.alpha > 0);
+        }
+    }
+    draw() {
+        if (!this.exploded) {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, 3, 3);
+        } else {
+            this.particles.forEach(p => p.draw());
+        }
+    }
+}
+
+let fireworks = [];
+
+function animate() {
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+    if (Math.random() < 0.05 && fireworks.length < 8) {
+        fireworks.push(new Firework());
+    }
+
+    fireworks.forEach(f => {
+        f.update();
+        f.draw();
+    });
+
+    fireworks = fireworks.filter(f => !(f.exploded && f.particles.length === 0));
+
+    requestAnimationFrame(animate);
+}
+animate();
+
+window.addEventListener("click", e => {
+    fireworks.push(new Firework(e.clientX, e.clientY));
+});
+</script>
+
+</body>
+</html>
